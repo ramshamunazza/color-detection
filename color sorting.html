@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Color Detection and Sorting</title>
+  <style>
+    video, canvas {
+      border: 1px solid black;
+      display: block;
+      margin: 10px auto;
+    }
+  </style>
+</head>
+<body>
+  <h2 style="text-align:center">Color Detection and Sorting (Red, Green, Blue)</h2>
+  <video id="video" width="640" height="480" autoplay muted playsinline></video>
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // Request webcam stream
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then(stream => {
+        video.srcObject = stream;
+        video.play();
+      })
+      .catch(err => {
+        console.error("Error accessing webcam:", err);
+      });
+
+    function detectColor() {
+      if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = frame.data;
+
+        // Clear the canvas to avoid overlap
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        for (let i = 0; i < pixels.length; i += 4) {
+          const r = pixels[i];
+          const g = pixels[i + 1];
+          const b = pixels[i + 2];
+
+          const x = (i / 4) % canvas.width;
+          const y = Math.floor((i / 4) / canvas.width);
+
+          // Adjusted thresholds for better detection
+          if (r > 100 && g < 80 && b < 80) {
+            drawDot(x, y, "red");
+          } else if (g > 100 && r < 80 && b < 80) {
+            drawDot(x, y, "green");
+          } else if (b > 100 && r < 80 && g < 80) {
+            drawDot(x, y, "blue");
+          }
+        }
+      }
+    }
+
+    function drawDot(x, y, color) {
+      ctx.beginPath();
+      ctx.arc(x, y, 2, 0, 2 * Math.PI);
+      ctx.fillStyle = color;
+      ctx.fill();
+    }
+
+    // Start detection loop
+    setInterval(detectColor, 200);
+  </script>
+</body>
+</html>
